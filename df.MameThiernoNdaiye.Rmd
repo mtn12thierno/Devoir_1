@@ -1,0 +1,145 @@
+---
+title: "devoir_MameThierno_exo_rg"
+author: "Mame Thierno Ndiaye"
+date: "2023-04-26"
+output:
+  pdf_document: default
+  word_document: default
+editor_options: 
+  markdown: 
+    wrap: sentence
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, results = "show", warning =F)
+
+library(haven)
+df.MameThiernoNdaiye=read.csv2("C:\\Users\\user\\Desktop\\mtn\\ENSAE\\ISE\\ISEP2\\SEMESTRE 2\\Informatique\\R_2023\\R_2023\\Devoir 1\\df.MameThiernoNdaiye.csv")
+```
+
+# Statistique univarié
+
+## fonction d.var.quant
+
+Nous allons créer une fonction d.var.quant qui décrie une variable quantitave.La fonction affichera les tendances centrales, les graphiques (hist,boxplot, etc. . . ), intervalle de confiance.
+
+```{r fonction d.var.quant}
+ d.var.quant<- function(variable){
+    Des=summary(variable)
+  Graphe=hist(variable, main = "Histogramme des données", xlab = "Variable", ylab = "Fréquence")
+ Plot=boxplot(variable, main = "Boite à moustache", ylab = "Valeurs")
+ library(questionr)
+ Plot
+ Graphe
+ print(Des)
+ t.test(variable)
+ }
+
+```
+
+## fonction d.var.quali
+
+Nous allons créer une fonction d.var.quali qui décrie une variable qualitative.La fonction affichera la frequence, les graphiques (Graphique en secteurs,Graphique en barres)
+
+```{r fonction d.var.quali}
+ d.var.quali<- function(variable){
+  f=data.frame(table(variable))
+barplot(f$Freq, names.arg = f$variable, main = "Graphique en barres des données", xlab = "Données", ylab="Frequence")
+ pie(f$Freq, labels =f$variable, main = "Graphique en secteurs des données")
+  table(variable)
+ }
+```
+
+## Application
+
+Nous allons maintenant appliquer les deux fonctions créées précedement sur les variables de notre base de données.
+
+```{r}
+#Pour les variables quantitative:
+d.var.quant(df.MameThiernoNdaiye$age)
+d.var.quant(as.numeric(df.MameThiernoNdaiye$Taille))
+d.var.quant(as.numeric(df.MameThiernoNdaiye$Moy_seme1))
+d.var.quant(as.numeric(df.MameThiernoNdaiye$Moy_final))
+#Pour les variables qualitative:
+d.var.quali(df.MameThiernoNdaiye$mention_Seme1)
+d.var.quali(df.MameThiernoNdaiye$mention_final)
+d.var.quali(df.MameThiernoNdaiye$nationalité)
+d.var.quali(df.MameThiernoNdaiye$centre_examen)
+d.var.quali(df.MameThiernoNdaiye$Région_Examen)
+```
+
+# Statistique bivariée
+
+## Liaison entre deux variables quantitaives:
+
+Nous allons etudier le lien entre deux variables quantitatives.
+On prendra la **Moy_seme1** et la **Moy_final**.
+on va d'abord reprensenter le nuage de points entre les deux variables puis calculer la Corrélation linéaire entre les deux variables.
+
+```{r}
+plot(as.numeric(df.MameThiernoNdaiye$Moy_seme1) , as.numeric(df.MameThiernoNdaiye$Moy_final))
+cor(as.numeric(df.MameThiernoNdaiye$Moy_seme1) , as.numeric(df.MameThiernoNdaiye$Moy_final))
+```
+
+Les resultats obtenus montrent qu'il y'a pas une forte relation lineaire entre les deux variables.
+on va maintenant représenter la droite de régression sur notre nuage de points.
+
+```{r}
+library(ggplot2)
+ggplot(df.MameThiernoNdaiye, aes(x=as.numeric(Moy_seme1), y=as.numeric(Moy_final))) + 
+  geom_point()+
+  geom_smooth(method=lm)
+```
+
+## Liaison entre deux variables qualitative:
+
+Nous allons etudier le lien entre deux variables quantitatives.
+On prendra la **nationalité** et la **mention_final**.
+on va d'abord faire le tableau croisé des deux variables.
+
+```{r}
+library(questionr)
+#Tableau en pourcentages ligne ou colonne.
+tab=table(df.MameThiernoNdaiye$nationalité, df.MameThiernoNdaiye$mention_final)
+lprop(tab)
+cprop(tab)
+```
+
+On va maintenant proceder au Test du χ²
+
+```{r}
+chisq.test(tab)
+#X-squared: c'est la valeur de la statistique du χ² pour notre tableau, c’est-à-dire une “distance” entre notre tableau observé et celui attendu si les deux variables étaient indépendantes.
+#df: le nombre de degrés de libertés du test, qui dépend des dimensions du tableau.
+#p-value:C'est la probabilité d’obtenir une valeur de la statistique du χ² au moins aussi extrême sous l’hypothèse d’indépendance..
+```
+
+Les resultats du test montre un p-value = 0.3875, donc il n'y pas de relation entre les deux variables.
+# Liaison entre Une variable qualitative et une var quantitative Nous allons etudier le lien entre Une variable qualitative et une variable quantitative.
+On prendra la **l'âge** et la **mention_final**.
+on va d'abord faire une représentation graphique des boites à moustaches des deux variables.
+
+```{r}
+boxplot(df.MameThiernoNdaiye$age ~ df.MameThiernoNdaiye$mention_final)
+```
+
+Dans le graphique généré, on voit que ceux qui ont une mention assez bien semble être au même age que ceux qui ont la mention bien.
+Pour verifier notre intuition, On va maintenant calculer la moyenne d'âge pour les differentes mentions.
+
+```{r}
+library(dplyr)
+tapply(df.MameThiernoNdaiye$age, df.MameThiernoNdaiye$mention_final, mean)
+
+```
+
+La mention T_bien n'a été obtenue que par une seule personne et donc ne peut pas nous donner beaucoup d'information.
+Si on prend les mention bien et assez bien, les resultats montre que la moyenne d'âge chez les mentions bien est sensiblement la m\$emee chez les assez bien.
+
+on va maintenant proceder aux test pour confirmer ou pas notre intuition.
+
+```{r}
+d=filter(df.MameThiernoNdaiye, mention_final != "Très bien" )
+t.test (d$age ~ d$mention_final)
+```
+
+Les resultats donnent un p_value=0.6482.Ceci montre qu'il y'a pas de relation etre les deux variables.
